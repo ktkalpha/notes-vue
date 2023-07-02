@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notes</title>
+
+    <!-- <script src="https://unpkg.com/petite-vue" defer init></script> -->
+    <script type="module">
+      import { createApp } from "https://unpkg.com/petite-vue?module";
+      import html2canvas from "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm";
+
+      function dataURLtoBlob(dataurl) {
+        var arr = dataurl.split(","),
+          mime = arr[0].match(/:(.*?);/)[1],
+          bstr = atob(arr[1]),
+          n = bstr.length,
+          u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], { type: mime });
+      }
+
+      createApp({
+        notes: [{ title: "Hello world!", desc: "lorem ipsum" }],
+        dialog: false,
+        titleNew: "",
+        descNew: "",
+        saveNote() {
+          this.notes = [
+            ...this.notes,
+            { title: this.titleNew, desc: this.descNew },
+          ];
+          this.dialog = false;
+        },
+        removeNote(i) {
+          this.notes.splice(i, 1);
+        },
+        editNote(i) {
+          this.titleNew = this.notes[i].title;
+          this.descNew = this.notes[i].desc;
+          this.removeNote(i);
+          this.dialog = true;
+        },
+        shareNote(e) {
+          let elm = e.target.parentElement.parentElement;
+          html2canvas(elm).then(function (canvas) {
+            let link = document.createElement("a");
+            link.download = "note.png";
+            link.href = canvas.toDataURL("image/png");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          });
+        },
+      }).mount();
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"
+    />
+    <style>
+      @media (min-width: 992px) {
+        .grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      .topbar {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-row: 1fr;
+      }
+    </style>
+  </head>
+  <body v-scope>
+    <div class="topbar">
+      <button @click="dialog = true;" style="width: 10rem">새 노트</button>
+    </div>
+    <dialog :open="dialog">
+      <main class="container">
+        <button @click="dialog = false;" style="width: 5rem">닫기</button>
+        <input v-model="titleNew" type="text" placeholder="제목 ..." />
+        <textarea v-model="descNew" placeholder="새 노트 ..."></textarea>
+        <button @click="saveNote">저장</button>
+      </main>
+    </dialog>
+    <div class="grid">
+      <article v-for="note, i in notes">
+        <h1>{{note.title}}</h1>
+        <p>{{note.desc}}</p>
+        <div class="row">
+          <button @click="removeNote(i)" style="width: 6rem">지우기</button>
+          <button @click="editNote(i)" style="width: 6rem">수정</button>
+          <button @click="shareNote" style="width: 7rem">다운로드</button>
+        </div>
+      </article>
+    </div>
+  </body>
+</html>
